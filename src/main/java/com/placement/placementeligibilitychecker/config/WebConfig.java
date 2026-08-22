@@ -14,7 +14,7 @@ public class WebConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:5173") // Use explicit origin instead of wildcard '*'
+                        .allowedOrigins("https://meek-platypus-67d1f0.netlify.app") // Use explicit origin instead of wildcard '*'
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
