@@ -1,0 +1,157 @@
+package com.placement.placementeligibilitychecker.service;
+
+import com.placement.placementeligibilitychecker.model.Application;
+import com.placement.placementeligibilitychecker.model.Company;
+import com.placement.placementeligibilitychecker.model.Student;
+import com.placement.placementeligibilitychecker.repository.ApplicationRepository;
+import com.placement.placementeligibilitychecker.repository.CompanyRepository;
+import com.placement.placementeligibilitychecker.repository.StudentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class ApplicationService {
+
+    @Autowired
+    private ApplicationRepository applicationRepository;
+
+    @Autowired
+    private StudentRepository studentRepository;
+
+    @Autowired
+    private CompanyRepository companyRepository;
+
+
+    // Get All Applications
+    public List<Application> getAllApplications() {
+
+        return applicationRepository.findAll();
+    }
+
+
+    // Get Applications By Student
+    public List<Application> getApplicationsByStudent(
+            Integer studentId) {
+
+        return applicationRepository.findByStudentId(studentId);
+    }
+
+
+    // Get Applications By Company
+    public List<Application> getApplicationsByCompany(
+            Integer companyId) {
+
+        return applicationRepository.findByCompanyId(companyId);
+    }
+
+
+    // Update Application Status
+    public Application updateStatus(
+            Integer applicationId,
+            String status) {
+
+        Application application =
+                applicationRepository
+                        .findById(applicationId)
+                        .orElse(null);
+
+        if (application == null) {
+            return null;
+        }
+
+        application.setStatus(status);
+
+        return applicationRepository.save(application);
+    }
+
+
+    // Apply For Company
+    public Application applyCompany(
+            Integer studentId,
+            Integer companyId) {
+
+
+        // Find Student
+        Student student =
+                studentRepository
+                        .findById(studentId)
+                        .orElse(null);
+
+
+        // Find Company
+        Company company =
+                companyRepository
+                        .findById(companyId)
+                        .orElse(null);
+
+
+        // Student or Company not found
+        if (student == null || company == null) {
+
+            throw new RuntimeException(
+                    "Student or Company not found."
+            );
+        }
+
+
+        // Check Department Eligibility
+        if (!student.getDepartment()
+                .equalsIgnoreCase(company.getDepartment())) {
+
+            throw new RuntimeException(
+                    "You are not eligible for this company. Department mismatch."
+            );
+        }
+
+
+        // Check CGPA Eligibility
+        if (student.getCgpa() < company.getMinCgpa()) {
+
+            throw new RuntimeException(
+                    "You are not eligible for this company. CGPA is too low."
+            );
+        }
+
+
+        // Check Already Applied
+        Application existingApplication =
+                applicationRepository
+                        .findByStudentIdAndCompanyId(
+                                studentId,
+                                companyId
+                        );
+
+
+        if (existingApplication != null) {
+
+            throw new RuntimeException(
+                    "Student has already applied to this company."
+            );
+        }
+
+
+        // Create New Application
+        Application application =
+                new Application();
+
+        application.setStudent(student);
+
+        application.setCompany(company);
+
+        application.setStatus("Applied");
+
+
+        // Save Application
+        return applicationRepository.save(application);
+    }
+
+
+    // Get Applications By Status
+    public List<Application> getApplicationsByStatus(
+            String status) {
+
+        return applicationRepository.findByStatus(status);
+    }
+}
